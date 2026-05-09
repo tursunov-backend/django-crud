@@ -1,8 +1,35 @@
 import json
 
+from django.views import View
 from django.http import HttpRequest, JsonResponse
 
 from .models import Item
+
+
+# FCB & CBV
+
+class ItemsView(View):
+    
+    def get(request: HttpRequest) -> JsonResponse:
+        items = [item.to_dict() for item in Item.objects.all()]
+
+        data = {
+            'itemas': items
+        }
+        return JsonResponse(data, safe=False)
+    
+    def post(self, request: HttpRequest) -> JsonResponse:
+        data = json.loads(request.body)
+
+        item = Item(name=data['name'], description=data.get('description', ''), amount=data['amount'])
+        item.save()
+
+        return JsonResponse({'message': 'ok'}, status=201)
+    
+
+class ItemView(View):
+    pass
+
 
 
 def items_view(request: HttpRequest) -> JsonResponse:
