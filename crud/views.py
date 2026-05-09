@@ -1,3 +1,40 @@
-from django.shortcuts import render
+import json
 
-# Create your views here.
+from django.http import HttpRequest, JsonResponse
+
+from .models import Item
+
+
+def items_view(request: HttpRequest) -> JsonResponse:
+    if request.method == 'GET':
+        items = [item.to_dict() for item in Item.objects.all()]
+
+        data = {
+            'itemas': items
+        }
+        return JsonResponse(data, safe=False)
+    
+    elif request.method == 'POST':
+        data = json.loads(request.body)
+
+        item = Item(name=data['name'], description=data.get('description', ''), amount=data['amount'])
+        item.save()
+
+        return JsonResponse({'message': 'ok'}, status=201)
+
+
+# client > browser > Gunicorn > Middleware > Url Dispatcher > View
+# client < browser < Gunicorn < Middleware < View
+
+def item_one_view(request: HttpRequest, id: int) -> JsonResponse:
+    # try:
+    #     item = Item.objects.get(id=id)
+    #     return JsonResponse(item.to_dict())
+    # except Item.DoesNotExist:
+    #     return JsonResponse({'error': 'not found.'})
+
+    item = Item.objects.filter(id=id).first()
+    if item:
+        return JsonResponse(item.to_dict())
+    else:
+        return JsonResponse({'error': 'not found.'})
