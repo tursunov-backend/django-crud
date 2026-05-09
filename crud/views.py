@@ -27,14 +27,40 @@ def items_view(request: HttpRequest) -> JsonResponse:
 # client < browser < Gunicorn < Middleware < View
 
 def item_one_view(request: HttpRequest, id: int) -> JsonResponse:
-    # try:
-    #     item = Item.objects.get(id=id)
-    #     return JsonResponse(item.to_dict())
-    # except Item.DoesNotExist:
-    #     return JsonResponse({'error': 'not found.'})
+    if request.method == 'GET':
+        # try:
+        #     item = Item.objects.get(id=id)
+        #     return JsonResponse(item.to_dict())
+        # except Item.DoesNotExist:
+        #     return JsonResponse({'error': 'not found.'})
 
-    item = Item.objects.filter(id=id).first()
-    if item:
-        return JsonResponse(item.to_dict())
+        item = Item.objects.filter(id=id).first()
+        if item:
+            return JsonResponse(item.to_dict())
+        else:
+            return JsonResponse({'error': 'not found.'})
+    elif request.method == 'DELETE':
+        try:
+            item = Item.objects.get(id=id)
+            item.delete()
+            return JsonResponse({'message': 'ok'})
+        except Item.DoesNotExist:
+            return JsonResponse({'error': 'not found.'})
+    elif request.method == 'PUT':
+        try:
+            item = Item.objects.get(id=id)
+
+            data = json.loads(request.body)
+            
+            item.name = data.get('name', item.name)
+            item.description = data.get('description', item.description)
+            item.amount = data.get('amount', item.amount)
+
+            item.save()
+            
+            return JsonResponse({'message': 'ok'})
+        except Item.DoesNotExist:
+            return JsonResponse({'error': 'not found.'})
     else:
-        return JsonResponse({'error': 'not found.'})
+        return JsonResponse({'message': 'not allowed'})
+
